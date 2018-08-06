@@ -1129,7 +1129,8 @@ This is also a good variable that shows some strength towards the model that wil
 <!HouseStyle, SalePrice Relationship>
 Wheather it is a one story building or two, this boxplot shows the relationship between the HouseStyle and the SalePrice of homes in this area. It has some good view of the average prices of any kind of house in this area which could also be a good fit towards the goal of this project. It has some outliers in it as well.
 
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-6-1.png)<!unnamed-chunk-6-1.png>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-6-1.png)  
+<!Statistical Histogram>
 Doing some more exploratory analysis on the data, the guassian method was used to do some data transformation which could be seen in the graph above. The graph is an histogram used to do some statistical analysis on the dataset. It is a comparison of the normal data histogram and also apply the gaussian on the data with different variables.
 
 ### Outliers
@@ -1142,7 +1143,8 @@ The data also has a lot of missing data. Also, while engineering some features e
 The missing data were fixed using imputation. I used the randomForest to do this with the missForest.
 
 ### Correlataions
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-9-1.png)<!unnamed-chunk-9-1.png>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-9-1.png)  
+<!Correlation Plot>
 
 This is the correlation plot between the different continuous variables in the dataset. Some of the variables are strongly correlated with some are sligthly correlated with each other.
 
@@ -1157,32 +1159,43 @@ I used cross validation for the dataset in final preparation on it before buildi
 ### Linear regression
 Linear regression was used to build the model with three other.
 
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-10-1.png)<!unnamed-chunk-10-1.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-10-2.png)<!unnamed-chunk-10-2.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-10-3.png)<!unnamed-chunk-10-3.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-10-4.png)<!unnamed-chunk-10-4.png>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-10-1.png)  
+<!Residual vs Fitted>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-10-2.png)  
+<!Standardize Residuals>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-10-3.png)  
+<!Standardize Residuals Suare Root>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-10-4.png)  
+<!Residuals vs Leverage>
 
 ### Ridge regression model
 Aggregating results
 Selecting tuning parameters
 Fitting alpha = 0, lambda = 1 on full training set
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-11-1.png)<!unnamed-chunk-11-1.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-11-2.png)<!unnamed-chunk-11-2.png>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-11-1.png)  
+<!Log Lambda>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-11-2.png)  
+<!Fraction Deviance plot>
 
 ### Lasso regression model
 Aggregating results
 Selecting tuning parameters
 Fitting alpha = 1, lambda = 0.5 on full training set
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-12-1.png)<!unnamed-chunk-12-1.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-12-2.png)<!unnamed-chunk-12-2.png>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-12-1.png)  
+<!Log Lambda>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-12-2.png)  
+<!Fraction Deviance plot>
 
 ### Elastic net regression
 Aggregating results
 Selecting tuning parameters
 Fitting alpha = 0, lambda = 0.5 on full training set
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-13-1.png)<!unnamed-chunk-13-1.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-13-2.png)<!unnamed-chunk-13-2.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-13-3.png)<!unnamed-chunk-13-3.png>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-13-1.png)  
+<!Log Lambda>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-13-2.png)  
+<!Fraction Deviance plot>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-13-3.png)  
+<!Variable importance>
 
 ### Compare models
 
@@ -1218,9 +1231,12 @@ Ridge          0
 Lasso          0
 ElasticNet     0
 
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-14-1.png)<!unnamed-chunk-14-1.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-14-2.png)<!unnamed-chunk-14-2.png>
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-14-3.png)<!unnamed-chunk-14-3.png>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-14-1.png)  
+<RMSE plot>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-14-2.png)
+ <!RMSE graph>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-14-3.png)
+ <Variable Importance>
 
 ### Predictions wiith the training data
 ### RMSE
@@ -1233,7 +1249,8 @@ ElasticNet     0
 
 ### RandomForest regression model
 ### Importance plot
-![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-17-1.png)<!unnamed-chunk-17-1.png>
+![](https://github.com/bolade4/Kaggle/blob/master/House-Prices/Images/unnamed-chunk-17-1.png)  
+<!Variable importance>
 
 ### Conclussion 
 We have obtained a pretty good model using Linear regression, Ridge regression, Lasso regression, Elastic Net regression and RandomForest. Athough there are other good machine learning model that could also be used for this project. Elastic Net regression has done better after comparing it with other regression models that can be seen above. More feature engeneering could be carried out on this data to get a more reduced RMSE score. I plan to revisit this project and do this in the future and also use some other techniques.
