@@ -49,6 +49,7 @@ lapply(
 )
 
 # Visulaizing the data
+install.packages('ggplot2')
 library(ggplot2)
 library(gridExtra)
 library(e1071)
@@ -228,7 +229,6 @@ table(is.na(house.comb$Alley))
 house.comb$Alley[which(is.na(house.comb$Alley))] <- 'None'
 
 # Utilities
-house.comb$Utilities <- y$Utilities
 table(house.comb$Utilities)
 house.comb$Utilities[which(is.na(house.comb$Utilities))]
 subset(house.comb, is.na(house.comb['Utilities']))
@@ -236,6 +236,7 @@ subset(house.comb, is.na(house.comb['Utilities']))
 # house.comb$Utilities[which(house.comb['Id'] == 1946)] <- 'ELO'
 
 # Exterior1st
+library(dplyr)
 table(house.comb$Exterior1st)
 house.comb$Exterior1st[which(is.na(house.comb$Exterior1st))]
 subset(house.comb, is.na(house.comb$Exterior1st))
@@ -404,8 +405,7 @@ ncol(house.cln)
 str(house.cln)
 
 # Correlataions
-# integ <- house.cln[sapply(house.cln, typeof) != "integer"]
-integ <- names(classes[classes == "integer" | classes == "numeric"])
+integ <- house.cln[sapply(house.cln, typeof) != "integer"]
 table(is.na(integ))
 names(integ)
 corr <- cor(integ)
@@ -415,10 +415,6 @@ library(corrplot)
 cor.row <- apply(corr, 1, function(x) sum(x > 0.3 | x < 0.3) > 1)
 corr <- corr[cor.row, cor.row]
 corrplot(corr, method = 'square')
-
-# Add the saleprice and the istrainset variable
-house.cln$SalePrice <- house.comb1$SalePrice
-house.cln$IsTrainSet <- house.comb1$IsTrainSet
 
 # Skew the dataset
 classes <- lapply(house.cln, function(x) class(x))
@@ -431,6 +427,10 @@ house.skew <- house.skew[abs(house.skew) > .75]
 for (x in names(house.skew)) {
   house.cln[[x]] <- log(house.cln[[x]] + 1)
 }
+
+# Add the saleprice and the istrainset variable
+house.cln$SalePrice <- house.comb1$SalePrice
+house.cln$IsTrainSet <- house.comb1$IsTrainSet
 
 # Use dummy to for categorical variables
 "house.cldum <- house.cln
@@ -453,6 +453,7 @@ str(house.train)
 dim(house.train)
 dim(house.test)
 
+################################################################
 # Building the model
 # Cross Validation.
 library(caret)
@@ -460,6 +461,7 @@ tr.control <- trainControl(method = "repeatedcv",
                            number = 10, repeats = 10,
                            verboseIter = T)
 
+################################################################
 # Linear regression
 set.seed(111)
 lm_model <- train(SalePrice ~ ., house.train, method = 'lm',
@@ -473,6 +475,7 @@ summary(lm_model)
 # Ploting the model
 plot(lm_model$finalModel)
 
+################################################################
 # Ridge regression model
 set.seed(111)
 install.packages("glmnet")
@@ -490,6 +493,7 @@ plot(ridge_model$finalModel, xvar = 'lambda', label = T)
 plot(ridge_model$finalModel, xvar = 'dev', label = T)
 plot(varImp(ridge_model, scale = F))
 
+################################################################
 # Lasso regression model
 set.seed(111)
 lasso_model <- train(SalePrice ~ ., data = house.train,
@@ -504,6 +508,7 @@ plot(lasso_model$finalModel, xvar = 'lambda', label = T)
 plot(lasso_model$finalModel, xvar = 'dev', label = T)
 plot(varImp(lasso_model, scale = F))
 
+################################################################
 # Elastic net regression
 set.seed(111)
 elas_model <- train(SalePrice ~ ., house.train,
@@ -549,6 +554,55 @@ elas_pred1 <- predict(final_model, house.test)
 # RMSE
 sqrt(mean((house.train$SalePrice - elas_pred1) ** 2))
 
+################################################################
+# Using Principal Components for regression to cut of dimensionality
+library(caret)
+PCA <- preProcess(house.train[, -1], method = 'pca')
+
+# Predict with training set
+trainPred <- predict(PCA, house.train)
+dim(trainPred)
+
+trainPred$SalePrice <- house.train$SalePrice
+
+# Ploting the PC
+qplot(x = PC1, y = log(SalePrice), data = trainPred, alpha = I(0.3)) +
+  theme_bw()
+qplot(x = PC2, y = log(SalePrice), data = trainPred, alpha = I(0.3)) +
+  theme_bw()
+qplot(x = PC3, y = log(SalePrice), data = trainPred, alpha = I(0.3)) +
+  theme_bw()
+qplot(x = PC4, y = log(house.train$SalePrice), data = trainPred, alpha = I(0.3)) +
+  theme_bw()
+qplot(x = PC5, y = log(SalePrice), data = trainPred, alpha = I(0.3)) +
+  theme_bw()
+
+################################################################
+# Principal Components Regression
+install.packages('pls')
+library(pls)
+
+set.seed(111)
+pcr.model <- pcr(SalePrice ~ ., data = house.train, scale = F,
+                 validation = 'CV', ncomp = 170)
+
+summary(pcr.model)
+
+# cross-validation estimated RMSE or MSE scores plot
+validationplot(pcr.model, val.type = 'RMSEP')
+
+## to reset graph
+resetPar <- function() {
+  dev.new()
+  op <- par(no.readonly = T)
+  dev.off()
+  op
+}
+
+par(resetPar())
+par(bg = "white")
+
+################################################################
 # RandomForest regression model with cross validation
 library(randomForest)
 
@@ -561,7 +615,7 @@ rand_model
 
 # Function to streamline and plotting training models analyses using Pearson correlation:
 rmse.training <- function(pred,observed,method){
-  rmse.training = sqrt(mean((pred - observed)^2))
+  rmse.training = sqrt(mean((pred - observed) ^ 2))
   cor.training = cor(house.train$SalePrice, pred)
   plot(x = pred, y = observed, cex = 0.5, col = "navy", pch = 19, 
        main = method,xlab = "Log(Predicted)", ylab = "Log(Observed)")
@@ -585,6 +639,19 @@ head(var_import, 20)
 # Predictions
 rand_pred <- predict(rand_model, house.test)
 
+# RandomForest variable importance graph
+set.seed(111)
+var_imp_model <- randomForest(SalePrice ~ ., data = house.train, ntree = 500,
+                              mtry = 3, nodesize = 0.01 * nrow(house.train))
+
+# rand_pred <- predict(rand_model, house.test)
+# Variable importance
+var_importance <- importance(var_imp_model)
+
+# Importance plot
+varImpPlot(var_imp_model)
+
+################################################################
 # Gradient boosting with cross validation
 install.packages('gbm')
 library(gbm)
@@ -606,5 +673,319 @@ dotPlot(varImp(grad_model))
 
 # Predictions
 grad_pred <- predict(grad_model, house.test)
+
+################################################################
+# Extreme Gradient boosting with cross validation
+install.packages('xgboost')
+library(xgboost)
+
+set.seed(111)
+xgrad_model <- train(SalePrice ~ ., data = house.train, method = "xgbLinear", 
+                     trControl = trainControl(method = "cv", number = 10), verbose = FALSE)
+
+# Result
+xgrad_model
+
+# Ploting the RMSE training graph
+rmse.training(pred = predict(xgrad_model, house.train), 
+              observed = house.train$SalePrice, 
+              method = 'Extreme Gradient Boosting')
+
+# Variable importance
+dotPlot(varImp(xgrad_model))
+
+# Predictions
+xgrad_pred <- predict(xgrad_model, house.test)
+
+################################################################
+# Support vector machines 
+# with a radial kernel with cross validation
+library(e1071)
+
+set.seed(111)
+svm_model <- train(SalePrice ~ ., data = house.train, method = "svmRadial", 
+                   trControl = trainControl(method = "cv", number = 10), verbose = FALSE)
+
+# Result
+svm_model
+
+# Ploting the RMSE training graph
+rmse.training(pred = predict(svm_model, house.train), 
+              observed = house.train$SalePrice, 
+              method = 'Support Vector Machines')
+
+# Variable importance
+dotPlot(varImp(svm_model))
+
+# Predictions
+svm_pred <- predict(svm_model, house.test)
+
+###############################################################
+# Using log10()
+par(mfrow = c(1, 2))
+boxplot(house.train$SalePrice, main = 'SalePrice')
+boxplot(log10(house.train$SalePrice), main = 'Log10(SalePrice)')
+
+# Missing data
+na.status <- is.na(house.comb1)
+na.sum <- apply(na.status, 2, sum)
+names(na.sum) <- colnames(house.comb1)
+most.missing <- which(na.sum > (0.3 * nrow(house.comb1)))
+na.sum[most.missing]
+
+sapply(house.comb1, function(x) sum(is.na(x)))
+
+# Alley boxplot
+ggplot(house.comb1, aes(Alley, log(SalePrice), fill = Alley)) +
+  geom_boxplot()
+ggplot(house.comb1, aes(Alley, SalePrice, fill = Alley)) +
+  geom_boxplot()
+ggplot(house.comb1, aes(Alley, log10(SalePrice), fill = Alley)) +
+  geom_boxplot()
+
+# FireplaceQu boxplot
+ggplot(house.comb1, aes(FireplaceQu, SalePrice, fill = FireplaceQu)) +
+  geom_boxplot()
+ggplot(house.comb1, aes(FireplaceQu, log10(SalePrice), fill = FireplaceQu)) +
+  geom_boxplot()
+
+# Log10() for gaussian method
+par(mfrow=c(1,2))
+hist(house.comb1$SalePrice)
+hist(log10(house.comb1$SalePrice)) # Looks more gaussian
+
+# Fitting FireplaceQu column
+FirePlaceFit <- lm(log10(house.comb1$SalePrice) ~ FireplaceQu, house.comb1)
+summary(FirePlaceFit)
+
+# Plot FirePlaceFit
+par(mfrow = c(2, 2))
+plot(FirePlaceFit)
+
+# Continuous variables in the dataset
+cont.var <- NULL
+for(i in 1:ncol(house.comb1)){
+  if(class(house.comb1[, i]) == "integer" | class(house.comb1[, i]) == "numeric"){
+    cont.var <- c(cont.var, i)
+  }
+}
+
+# Part1: transforming LotArea to make it more gaussian
+pairs(log10(house.comb1$SalePrice) ~ ., data = house.comb1[, cont.var[1:10]], 
+      cex = 0.05, pch = 19, col = "navy")
+# Part2: Area related features generally explain variation in the SalePrice
+pairs(log10(house.comb1$SalePrice) ~ ., data = house.comb1[, cont.var[11:20]], 
+      cex = 0.05, pch = 19, col = "navy")
+# Part3: Size of the garage and number of rooms are good predictors
+pairs(log10(house.comb1$SalePrice) ~ ., data = house.comb1[,cont.var[22:31]], 
+      cex = 0.05, pch = 19, col = "navy")
+# Part4: fairly weak predictors
+pairs(log10(house.comb1$SalePrice) ~ ., data = house.comb1[,cont.var[32:38]], 
+      cex = 0.05, pch = 19, col = "navy")
+
+################################################################
+## Using Principal Components along 
+## with Mechine Learning Algorithms.
+# Gradient boosting with cross validation, Principal Components.
+set.seed(111)
+grad_pca <- train(SalePrice ~ ., data = trainPred, method = "gbm", 
+                  trControl = trainControl(method = "cv", number = 10), verbose = FALSE)
+
+# Result
+grad_pca
+
+# Ploting the RMSE training graph
+rmse.training(pred = predict(grad_pca, trainPred), 
+              observed = house.train$SalePrice, 
+              method = 'Gradient Boosting with PCs')
+
+# Variable importance
+dotPlot(varImp(grad_pca))
+
+# Prepare principal components of the test set
+library(caret)
+
+PCA.test <- preProcess(house.test[, -80], method = "pca")
+PCAtest <- predict(PCA.test, newdata = house.test)
+
+# Predictions with test data
+PCAtest$MSSubClass <- house.test$MSSubClass
+grad_pred <- predict(grad_pca, PCAtest)
+
+################################################################
+# SVM with a radial kernel, CV using PCs
+set.seed(111)
+svm_pca <- train(SalePrice ~ ., data = trainPred, method = "svmRadial", 
+                 trControl = trainControl(method = "cv", number = 10), verbose = FALSE)
+
+# Result
+svm_pca
+
+# Ploting the RMSE training graph
+rmse.training(pred = predict(svm_pca, trainPred), 
+              observed = house.train$SalePrice, 
+              method = 'Support Vector Machines with PCs')
+
+# Variable importance
+dotPlot(varImp(svm_pca))
+
+# Prepare principal components of the test set
+library(caret)
+
+svmpca.test <- preProcess(house.test[, -80], method = "pca")
+svmPCAtest <- predict(svmpca.test, newdata = house.test)
+
+# Predictions with test data
+svmPCAtest$MSSubClass <- house.test$MSSubClass
+svm_pca_pred <- predict(svm_pca, svmPCAtest)
+
+################################################################
+# RandomForest with CV using PCs
+set.seed(111)
+rf_pca <- train(SalePrice ~ ., data = trainPred, method = "rf", 
+                trControl = trainControl(method = "cv", number = 10), verbose = FALSE)
+
+# Result
+rf_pca
+
+# Ploting the RMSE training graph
+rmse.training(pred = predict(rf_pca, trainPred), 
+              observed = house.train$SalePrice, 
+              method = 'Random Forest with PCs')
+
+# Prepare principal components of the test set
+library(caret)
+
+rfpca.test <- preProcess(house.test[, -80], method = "pca")
+rfPCAtest <- predict(rfpca.test, newdata = house.test)
+
+# Predictions with test data
+rfPCAtest$MSSubClass <- house.test$MSSubClass
+rf_pca_pred <- predict(rf_pca, rfPCAtest)
+
+################################################################
+################################################################
+################################################################
+# Running further analysis
+# Converting categorical variables to dummy variables
+library(caret)
+
+house.cldum <- house.cln
+house.dummy <- dummyVars(~ ., data = house.cldum[c(-80, -81)])
+house.dummydf <- data.frame(predict(house.dummy, newdata = house.cldum))
+head(house.dummydf)
+house.clnum <- house.dummydf
+str(house.clnum)
+
+# Split the dataset back to training and test set
+house.clnum$SalePrice <- house.cldum$SalePrice
+hou.train <- house.clnum[1:1460, ]
+hou.test <- house.clnum[1461:2919, ]
+
+str(hou.train)
+dim(hou.train)
+dim(hou.test)
+
+################################################################
+# Building the model
+# Cross Validation.
+library(caret)
+dumtr.control <- trainControl(method = "repeatedcv", 
+                              number = 10, repeats = 10,
+                              verboseIter = T)
+
+################################################################
+# Linear regression
+set.seed(111)
+dumlm_model <- train(SalePrice ~ ., hou.train, method = 'lm',
+                     trControl = dumtr.control)
+
+# Results
+dumlm_model$results
+dumlm_model
+summary(dumlm_model)
+
+# Ploting the model
+plot(dumlm_model$finalModel)
+
+################################################################
+# Ridge regression model
+set.seed(111)
+install.packages("glmnet")
+library(glmnet)
+
+dumridge_model <- train(SalePrice ~ ., data = hou.train,
+                        method = "glmnet", trControl = dumtr.control,
+                        tuneGrid = expand.grid(alpha = 0, 
+                                               lambda = seq(0.0001, 1, length = 5)))
+
+# Plot results  
+plot(dumridge_model)
+dumridge_model
+plot(dumridge_model$finalModel, xvar = 'lambda', label = T)
+plot(dumridge_model$finalModel, xvar = 'dev', label = T)
+plot(varImp(dumridge_model, scale = F))
+
+################################################################
+# Lasso regression model
+set.seed(111)
+dumlasso_model <- train(SalePrice ~ ., data = hou.train,
+                        method = "glmnet", trControl = dumtr.control,
+                        tuneGrid = expand.grid(alpha = 1, 
+                                               lambda = seq(0.0001, 0.5, length = 5)))
+
+# Plot results
+plot(dumlasso_model)
+dumlasso_model
+plot(dumlasso_model$finalModel, xvar = 'lambda', label = T)
+plot(dumlasso_model$finalModel, xvar = 'dev', label = T)
+plot(varImp(dumlasso_model, scale = F))
+
+################################################################
+# Elastic net regression
+set.seed(111)
+dumelas_model <- train(SalePrice ~ ., hou.train,
+                       method = 'glmnet', 
+                       tuneGrid = expand.grid(alpha = seq(0, 1, length = 10),
+                                              lambda = seq(0.0001, 0.5, length = 5)),
+                       trControl = dumtr.control) 
+
+# Plot results
+plot(dumelas_model)
+dumelas_model
+plot(dumelas_model$finalModel, xvar = 'lambda', label = T)
+plot(dumelas_model$finalModel, xvar = 'dev', label = T)
+plot(varImp(dumelas_model, scale = F))
+
+# Compare models
+dummodel_comp <- list(LinearModel = dumlm_model, Ridge = dumridge_model, 
+                      Lasso = dumlasso_model, ElasticNet = dumelas_model)
+dumres <- resamples(dummodel_comp)
+summary(dumres)
+bwplot(dumres)
+xyplot(dumres, metric = 'RMSE')
+
+# Best model
+dumelas_model$bestTune
+dumbest <- dumelas_model$finalModel
+coef(dumbest, s = dumelas_model$bestTune$lambda)
+
+# Save final model for later use
+saveRDS(dumelas_model, 'dumfinal_model.rds')
+dumfinal_model <- readRDS('dumfinal_model.rds')
+print(dumfinal_model)
+
+# Predictions with training data
+dumelas_pred <- predict(dumfinal_model, hou.train)
+
+# RMSE
+sqrt(mean((hou.train$SalePrice - dumelas_pred) ** 2))
+
+# Predictions with test data
+dumelas_pred1 <- predict(dumfinal_model, hou.test)
+
+# RMSE
+sqrt(mean((hou.train$SalePrice - dumelas_pred1) ** 2))
+# sqrt(mean((hou.test$SalePrice - dumelas_pred1) ** 2))
 
 write.csv(data.frame(Id=test$Id,SalePrice=elas_pred1),"elast.csv",row.names = F)
